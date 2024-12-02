@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<EmailRequest>
+    <Sender>sender@example.com</Sender>
+    <Recipient>recipient@example.com</Recipient>
+    <Subject>Test Email</Subject>
+    <Body>This is the body of the email.</Body>
+    <Timestamp>2024-12-01T10:00:00</Timestamp>
+</EmailRequest>
