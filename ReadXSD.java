@@ -1,79 +1,52 @@
+import org.w3c.dom.*;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import org.w3c.dom.*;
-
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathFactory;
 import java.io.File;
 
 public class ReadXSD {
 
     public static void main(String[] args) {
         File xsdFile = new File("email_request.xsd");
-        readAndDisplayXSDStructure(xsdFile);
+        readXSDFile(xsdFile);
     }
 
-    // Function to read and display the structure of the XSD file
-    public static void readAndDisplayXSDStructure(File xsdFile) {
+    public static void readXSDFile(File xsdFile) {
         try {
-            // Initialize a DocumentBuilder for parsing the XSD file
+            // Create a DocumentBuilderFactory and enable namespace awareness
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder builder = factory.newDocumentBuilder();
+            factory.setNamespaceAware(true);
 
-            // Parse the XSD file and get the DOM representation
+            // Build a Document from the XSD file
+            DocumentBuilder builder = factory.newDocumentBuilder();
             Document document = builder.parse(xsdFile);
 
-            // Normalize the document to merge adjacent text nodes
-            document.getDocumentElement().normalize();
+            // Create an XPath instance
+            XPath xpath = XPathFactory.newInstance().newXPath();
 
-            // Get the root element (xs:schema)
-            Element rootElement = document.getDocumentElement();
-            System.out.println("Root Element: " + rootElement.getNodeName());
+            // Find all <xs:element> nodes in the document
+            NodeList elementNodes = (NodeList) xpath.evaluate(
+                    "//*[local-name()='element']", // XPath query to find all `xs:element` tags
+                    document,
+                    XPathConstants.NODESET
+            );
 
-            // Process all child nodes of the root element
-            NodeList nodeList = rootElement.getChildNodes();
-            for (int i = 0; i < nodeList.getLength(); i++) {
-                Node node = nodeList.item(i);
-
-                // Only process element nodes
+            // Print details about each <xs:element> node
+            System.out.println("Elements defined in the XSD:");
+            for (int i = 0; i < elementNodes.getLength(); i++) {
+                Node node = elementNodes.item(i);
                 if (node.getNodeType() == Node.ELEMENT_NODE) {
                     Element element = (Element) node;
-
-                    if (element.getNodeName().equals("xs:element")) {
-                        // Print details for xs:element
-                        System.out.println("Element Name: " + element.getAttribute("name"));
-                        String type = element.getAttribute("type");
-                        if (!type.isEmpty()) {
-                            System.out.println("    Type: " + type);
-                        } else {
-                            System.out.println("    Type: Complex Type (Defined Inline)");
-                        }
-                    } else if (element.getNodeName().equals("xs:complexType")) {
-                        // Process complex type structure
-                        processComplexType(element);
-                    }
+                    String name = element.getAttribute("name");
+                    String type = element.getAttribute("type");
+                    System.out.println("Element Name: " + name + (type.isEmpty() ? "" : ", Type: " + type));
                 }
             }
         } catch (Exception e) {
-            System.out.println("Error reading XSD file: " + e.getMessage());
             e.printStackTrace();
-        }
-    }
-
-    // Helper method to process complex types
-    public static void processComplexType(Element complexTypeElement) {
-        NodeList sequenceNodes = complexTypeElement.getElementsByTagName("xs:sequence");
-        if (sequenceNodes.getLength() > 0) {
-            Node sequenceNode = sequenceNodes.item(0);
-
-            if (sequenceNode.getNodeType() == Node.ELEMENT_NODE) {
-                NodeList childElements = ((Element) sequenceNode).getElementsByTagName("xs:element");
-                System.out.println("    Complex Type Sequence:");
-
-                for (int i = 0; i < childElements.getLength(); i++) {
-                    Element childElement = (Element) childElements.item(i);
-                    System.out.println("        Element Name: " + childElement.getAttribute("name"));
-                    System.out.println("        Type: " + childElement.getAttribute("type"));
-                }
-            }
+            System.out.println("Error reading the XSD file: " + e.getMessage());
         }
     }
 }
